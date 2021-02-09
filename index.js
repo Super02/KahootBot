@@ -11,7 +11,7 @@ bot.on('ready', () => {
     console.log(`${bot.user.username}#${bot.user.discriminator} is online`)
 });
 
-bot.on('messageCreate', (message) => {
+bot.on('messageCreate', async (message) => {
     const mentionRegexPrefix = RegExp(`^<@!?${bot.user.id}>`);
 
     if (!message || !message.member || message.member.bot) return;
@@ -27,25 +27,30 @@ bot.on('messageCreate', (message) => {
     if (command === 'join') {
         let pin = args[0];
         if (!args.length) return message.channel.createMessage('You need to provide me the kahoot\'s pin!');
-        message.channel.createMessage('Sending bots to the following kahoot game');
+        if (!args[0].match(/^[0-9]+$/)) return message.channel.createMessage('You can only provide numbers!')
+
+        let sending = await message.channel.createMessage(`Trying to send bots to \`${args[0]}\``);
 
         [...Array(400).keys()].map(() => {
-            const client = new Kahoot();
+            const bots = new Kahoot();
             const name = chance.name();
-            client.join(pin, name);
 
-            client.on("Joined", () => {
+            bots.join(pin, name).catch(err =>  { return; })
+
+            bots.on("Joined", () => {
                 console.log(`${pin}: Joined successfully`)
-            });
+            })
 
-            client.on("QuestionStart", question => {
+            bots.on("QuestionStart", question => {
                 question.answer(Math.floor(Math.random() * 4))
             });
 
-            return client;
+            return bots;
         });
 
-        client.join(pin, 'cancer'); // join as someone so it wont spam console logs and messages
+        client.join(pin, 'cancer').catch(err => {
+            sending.edit('Sorry, an error has occured. Is the PIN correct?')
+        }) // join as someone so it wont spam console logs and messages
 
         client.on("QuizStart", () => {
             console.log(`${pin}: Quiz is starting`)
