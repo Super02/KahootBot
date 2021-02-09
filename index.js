@@ -8,11 +8,10 @@ const chance = new Chance();
 const bot = new Eris(process.env.TOKEN);
 
 bot.on('ready', () => {
-    console.log(`${bot.user.username}#${bot.user.discriminator} on käynnistetty`)
+    console.log(`${bot.user.username}#${bot.user.discriminator} is online`)
 });
 
 bot.on('messageCreate', (message) => {
-    const mentionRegex = RegExp(`^<@!?${bot.user.id}>$`);
     const mentionRegexPrefix = RegExp(`^<@!?${bot.user.id}>`);
 
     if (!message || !message.member || message.member.bot) return;
@@ -30,7 +29,7 @@ bot.on('messageCreate', (message) => {
         if (!args.length) return message.channel.createMessage('You need to provide me the kahoot\'s pin!');
         message.channel.createMessage('Sending bots to the following kahoot game');
 
-        const bots = [...Array(400).keys()].map((i) => {
+        [...Array(400).keys()].map(() => {
             const client = new Kahoot();
             const name = chance.name();
             client.join(pin, name);
