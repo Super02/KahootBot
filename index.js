@@ -26,19 +26,25 @@ bot.on('messageCreate', async (message) => {
 
     if (command === 'join') {
         let pin = args[0];
+        let botAmount = args[1] || 500;
         if (!args.length) return message.channel.createMessage('You need to provide me the kahoot\'s pin!');
         if (!args[0].match(/^[0-9]+$/)) return message.channel.createMessage('You can only provide numbers!')
+        if (botAmount > 500) return message.channel.createMessage('You can only send maximum of 500 bots!')
 
-        let sending = await message.channel.createMessage(`Trying to send bots to \`${args[0]}\``);
+        let msg = await message.channel.createMessage(`Trying to send ${botAmount} bots to \`${args[0]}\``);
 
-        [...Array(400).keys()].map(() => {
+        [...Array(parseInt(botAmount)).keys()].map(() => {
             const bots = new Kahoot();
             const name = chance.name();
 
             bots.join(pin, name).catch(err =>  { return; })
 
             bots.on("Joined", () => {
-                console.log(`${pin}: Joined successfully`)
+                console.log(`${pin}: ${name} Joined successfully`)
+            })
+
+            bots.on("Disconnect", reason => {
+                console.log(`${pin}: ${name} Disconnected from the game for reason ${reason}`)
             })
 
             bots.on("QuestionStart", question => {
@@ -48,13 +54,18 @@ bot.on('messageCreate', async (message) => {
             return bots;
         });
 
-        client.join(pin, 'cancer').catch(err => {
-            sending.edit('Sorry, an error has occured. Is the PIN correct?')
+        client.join(pin, chance.name()).catch(err => {
+            msg.edit('Sorry, an error has occured. Is the PIN correct?')
         }) // join as someone so it wont spam console logs and messages
 
         client.on("QuizStart", () => {
             console.log(`${pin}: Quiz is starting`)
             message.channel.createMessage(`${pin}: The quiz is about to start!`)
+        });
+
+        client.on("GameReset", () => {
+            console.log(`${pin}: Game has been reset`)
+            message.channel.createMessage(`${pin}: Game has been reset`)
         });
 
         client.on("QuestionStart", question => {
